@@ -56,21 +56,26 @@ def trial(base,history,gap,mag):
     hybrid=copy.deepcopy(conditioned)
     hybrid.hist[:]=quiet.hist
     hybrid.count=quiet.count
+    pipe_hybrid=copy.deepcopy(conditioned)
+    pipe_hybrid.pipe[:]=quiet.pipe
     # In all three, the same probe input is applied, no direct output edit.
     a=probe(quiet,mag)
     b=probe(conditioned,mag)
     c=probe(hybrid,mag)
+    p=probe(pipe_hybrid,mag)
     return {
       "control_beats":a["beats"],"history_beats":b["beats"],
-      "hybrid_beats":c["beats"],
+      "hybrid_beats":c["beats"],"pipe_swapped_beats":p["beats"],
       "control_peak":round(a["peak"],5),
       "history_peak":round(b["peak"],5),
       "hybrid_peak":round(c["peak"],5),
+      "pipe_swapped_peak":round(p["peak"],5),
       "pre_q":q_before,
       "pre_variance":{k:round(v,6) for k,v in variance_before.items()},
       "changed_firing":bool(a["beats"])!=bool(b["beats"]),
       "changed_onset":a["beats"]!=b["beats"],
-      "history_swap_recovered_baseline":c["beats"]==a["beats"]
+      "history_swap_recovered_baseline":c["beats"]==a["beats"],
+      "pipe_swap_recovered_baseline":p["beats"]==a["beats"]
     }
 
 def sweep():
@@ -90,6 +95,7 @@ def sweep():
       "different_firing":len(differ),
       "different_onset":len(time),
       "swap_restores_baseline_when_changed":sum(x["history_swap_recovered_baseline"] for x in time),
+      "pipe_swap_restores_baseline_when_changed":sum(x["pipe_swap_recovered_baseline"] for x in time),
       "examples":time[:35],
       "all_cases":cases
     }
@@ -107,8 +113,10 @@ if __name__=="__main__":
         print("Wrote",out)
     print(f"History responses: {result['different_firing']}/{result['n_cases']} firing changed, "
           f"{result['different_onset']} onset changed, "
-          f"{result['swap_restores_baseline_when_changed']} swapped history matched quiet response")
+          f"{result['swap_restores_baseline_when_changed']} history swaps, "
+          f"{result['pipe_swap_restores_baseline_when_changed']} pipe swaps matched quiet response")
     for row in result["examples"][:15]:
         print("DIFF",row["history"],row["gap"],row["probe"],
-              row["control_beats"],row["history_beats"],"swap",row["hybrid_beats"],
+              row["control_beats"],row["history_beats"],"hist_swap",row["hybrid_beats"],
+              "pipe_swap",row["pipe_swapped_beats"],
               "q",row["pre_q"],"var",row["pre_variance"])
