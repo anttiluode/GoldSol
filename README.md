@@ -4,6 +4,16 @@
 
 **The question here is deliberately harder than XOR:** Can the native GN27 slow state or its signal_in port improve a temporal prediction task compared with the minimal window neuron, without hiding mistakes by suppressing every error?
 
+## Result of this first GoldSol round
+
+**The targeted jitter rescue did not succeed.** Across 12 fixed choices (unchanged GN, window baseline, and 10 signal_in variants), none produced a consistent improvement in both prediction correspondence and discrepancy activity at held-out ±1/±2-tick jitter. For example, world-beat input routed into GN's signal_in at gain -0.75 reduced ±1 error spikes from 52.0 to 43.8 per run but increased cumulative source/prediction misses from 34 to 37 and extra predictions from 35 to 36. This is not a demonstrated predictive gain. Clean-stream behavior and permanent-omission detection remained functional.
+
+**The isolated history test identified a real but short effect.** In 336 identical-probe comparisons, 12 firing outcomes differed after conditioning; all occurred at a two-tick recovery gap. Swapping the 50-tick variance history restored **0/12**, while swapping the four-tick internal feedback pipeline restored **12/12**. No measured firing differences appeared at gaps of four ticks or longer in this probe grid.
+
+These are simulator results, not a proof that GN's history is universally short or that the checkerboard's only role is a fault. The four-tick pipeline also exists as an abstract delay in the matched window model, and no jitter advantage unique to GN27 has yet been demonstrated.
+
+**[Read the measured results and causal limitations](RESULTS.md)** · [View the latest CI](https://github.com/anttiluode/GoldSol/actions)
+
 ## What is established before this repository
 
 From [KultaaVaiKatinkultaa](https://github.com/anttiluode/KultaaVaiKatinkultaa) and [KultaaVaiKatinkultaaOpus](https://github.com/anttiluode/KultaaVaiKatinkultaaOpus):
@@ -41,9 +51,9 @@ Report the number of error spikes, world-to-memory coincidence misses (±1 tick 
 - gaps of 2, 4, 8, 16, 32 or 64 ticks between conditioning and probe;
 - 14 fixed test pulse strengths spanning -14 to -7.5.
 
-It records readout spike/onset changes, current square size q and variance. A **causal ablation** swaps only the conditioned relay's 50-tick history array with a quiet control while preserving its four-tick feedback pipeline. That deliberate state swap is used for diagnosis only; it is not claimed as native network wiring.
+It records readout spike/onset changes, current square size q and variance. **Two separate causal ablations** exchange either the conditioned relay's 50-tick history buffer or its four-tick feedback pipeline with the matching quiet relay. Neither swap is proposed as native wiring; both deliberately edit state for diagnosis.
 
-If the conditioned and quiet units behave identically, that is evidence against useful history dependence in the tested relay range. If they differ, the history-swap comparison helps separate changes carried by the 50-tick variance history from shorter feedback-pipeline state changes. It does not automatically establish a useful computational advantage.
+If the conditioned and quiet units behave identically, that is evidence against useful history dependence in the tested relay range. When they differ, the two state swaps distinguish short feedback-pipeline effects from 50-tick history effects in the selected regime. They do not automatically establish a useful computational advantage.
 
 ## What counts as real gold?
 
