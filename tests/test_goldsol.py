@@ -38,6 +38,19 @@ class GoldSol(unittest.TestCase):
   base=settle(Net([RELAY]))
   row=trial(base,"single",8,-10)
   self.assertIn("history_swap_recovered_baseline",row)
+  self.assertIn("pipe_swap_recovered_baseline",row)
   self.assertIn("pre_variance",row)
+ def test_short_history_effect_caused_by_pipe_not_hist_buffer(self):
+  base=settle(Net([RELAY]))
+  for kind in ("single","train_8","train_12","train_16"):
+   for mag in (-13.5,-11,-8):
+    with self.subTest(kind=kind,mag=mag):
+     row=trial(base,kind,2,mag)
+     self.assertTrue(row["changed_firing"])
+     self.assertFalse(row["history_swap_recovered_baseline"])
+     self.assertTrue(row["pipe_swap_recovered_baseline"])
+  for kind in ("single","train_8","train_12","train_16"):
+   with self.subTest(kind=kind,gap=4):
+    self.assertFalse(trial(base,kind,4,-11)["changed_firing"])
 
 if __name__=="__main__":unittest.main()
