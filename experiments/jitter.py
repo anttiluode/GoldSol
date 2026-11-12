@@ -23,6 +23,7 @@ START=40
 PERIOD=32
 LAPS=22
 TICKS=START+PERIOD*LAPS+24
+SCORE_END=START+PERIOD*LAPS # do not score post-stream omissions
 SCORE_START=START+PERIOD*6
 CHANGE_LAP=12
 INTERVENTIONS=[
@@ -90,9 +91,9 @@ def simulate(beats,model="gn",route="off",gain=0.,track=False):
     if track:d["var_below_target"]=history_low;d["var_total"]=history_total
     return d
 
-def match_counts(world,pred,after,tolerance=1):
-    w=[x for x in world if x>=after]
-    p=[x for x in pred if x>=after]
+def match_counts(world,pred,after,tolerance=1,before=None):
+    w=[x for x in world if x>=after and (before is None or x<before)]
+    p=[x for x in pred if x>=after and (before is None or x<before)]
     i=j=good=0
     while i<len(w) and j<len(p):
         if abs(w[i]-p[j])<=tolerance:
@@ -103,16 +104,16 @@ def match_counts(world,pred,after,tolerance=1):
             "misses":len(w)-good,"extra_predictions":len(p)-good}
 
 def score(d,change=False):
-    late=[t for t in d["error"] if t>=SCORE_START]
-    details=match_counts(d["world"],d["prediction"],SCORE_START,1)
+    late=[t for t in d["error"] if SCORE_START<=t<SCORE_END]
+    details=match_counts(d["world"],d["prediction"],SCORE_START,1,SCORE_END)
     details["errors_after_warmup"]=len(late)
     if change:
         change_at=START+PERIOD*CHANGE_LAP
-        details["errors_near_change"]=sum(change_at<=t<change_at+3*PERIOD for t in d["error"])
+        details["errors_near_change"]=sum(change_at<=t<min(SCORE_END,change_at+3*PERIOD) for t in d["error"])
         # Exclude transition, require exact late phase memory for clean-world control.
         late_at=START+18*PERIOD
-        w={t for t in d["world"] if t>=late_at}
-        p={t for t in d["prediction"] if t>=late_at}
+        w={t for t in d["world"] if late_at<=t<SCORE_END}
+        p={t for t in d["prediction"] if late_at<=t<SCORE_END}
         details["recovered_after_change"]=bool(w==p and details["errors_near_change"]>0)
     return details
 
